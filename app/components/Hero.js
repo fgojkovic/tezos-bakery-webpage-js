@@ -1,6 +1,7 @@
 "use client";
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
+import BakerStatus from "./BakerStatus";
 
 const Hero = () => {
   return (
@@ -35,6 +36,14 @@ const Hero = () => {
             Join thousands of satisfied delegators earning up to{' '}
             <span className="font-semibold text-tezos-blue">6% APY</span>
           </motion.p>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.3 }}
+            className="mb-8"
+          >
+            <BakerStatus compact />
+          </motion.div>
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
@@ -78,14 +87,14 @@ const Hero = () => {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 1 }}
-        className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20"
+        className="absolute bottom-10 left-1/2 -translate-x-1/2 z-20"
       >
         <motion.div
-          animate={{ y: [0, 10, 0] }}
+          animate={{ y: [0, 12, 0] }}
           transition={{ duration: 2, repeat: Infinity }}
-          className="w-6 h-10 border-2 border-gray-400 rounded-full flex justify-center items-start bg-white/80"
+          className="w-9 h-14 border-[3px] border-gray-500 rounded-full flex justify-center items-start bg-white/90 shadow-md"
         >
-          <div className="w-1 h-3 bg-gray-400 rounded-full mt-2"></div>
+          <div className="w-2 h-4 bg-gray-500 rounded-full mt-3"></div>
         </motion.div>
       </motion.div>
     </section>

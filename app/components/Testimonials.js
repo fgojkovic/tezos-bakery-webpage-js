@@ -39,7 +39,7 @@ const Testimonials = () => (
           What Our Delegators Say
         </h2>
         <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-          Don't just take our word for it. Here's what our community has to say 
+          Don&apos;t just take our word for it. Here&apos;s what our community has to say 
           about their experience with TezBake.
         </p>
       </motion.div>
@@ -58,7 +58,7 @@ const Testimonials = () => (
               ))}
             </div>
             <p className="text-gray-700 mb-6 leading-relaxed">
-              "{testimonial.content}"
+              &ldquo;{testimonial.content}&rdquo;
             </p>
             <div className="flex items-center space-x-3">
               <div className="w-12 h-12 aspect-square bg-gradient-to-r from-tezos-blue to-purple-600 rounded-full flex items-center justify-center overflow-hidden">

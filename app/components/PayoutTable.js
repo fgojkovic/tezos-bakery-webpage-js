@@ -8,6 +8,9 @@ export default function PayoutTable() {
   const [error, setError] = useState(null);
   const [selectedCycle, setSelectedCycle] = useState(null);
   const [splitRewards, setSplitRewards] = useState(null);
+  const [showAllRows, setShowAllRows] = useState(false);
+
+  const DEFAULT_VISIBLE_ROWS = 10;
 
   useEffect(() => {
     fetch(REWARDS_ENDPOINT)
@@ -53,6 +56,17 @@ export default function PayoutTable() {
   if (loading) return <div>Loading payouts...</div>;
   if (error) return <div>{error}</div>;
 
+  const visiblePayouts = showAllRows ? payouts : payouts.slice(0, DEFAULT_VISIBLE_ROWS);
+  const hasMoreRows = payouts.length > DEFAULT_VISIBLE_ROWS;
+  const hasSplitRewards = Array.isArray(splitRewards) && splitRewards.length > 0;
+  const hasNoSplitRewards = Array.isArray(splitRewards) && splitRewards.length === 0;
+
+  const getRewardAmount = (reward) => {
+    if (reward.total) return (reward.total / 1_000_000).toFixed(2);
+    if (reward.reward) return (reward.reward / 1_000_000).toFixed(2);
+    return "-";
+  };
+
   return (
     <div className="w-full flex flex-col items-center mt-8">
       <div className="w-full max-w-3xl bg-white rounded-xl shadow-lg p-6 flex flex-col items-center">
@@ -69,7 +83,7 @@ export default function PayoutTable() {
               </tr>
             </thead>
             <tbody>
-              {payouts && payouts.length > 0 ? payouts.map((reward, i) => (
+              {visiblePayouts && visiblePayouts.length > 0 ? visiblePayouts.map((reward, i) => (
                 <tr key={reward.cycle || reward.id || i} className="hover:bg-blue-50 transition">
                   <td className="px-4 py-2 border-b">
                     <button
@@ -82,7 +96,7 @@ export default function PayoutTable() {
                   </td>
                   <td className="px-4 py-2 border-b">{reward.block ?? reward.hash ?? "-"}</td>
                   <td className="px-4 py-2 border-b">{reward.timestamp ? new Date(reward.timestamp).toLocaleString() : "-"}</td>
-                  <td className="px-4 py-2 border-b">{reward.total ? (reward.total / 1_000_000).toFixed(2) : reward.reward ? (reward.reward / 1_000_000).toFixed(2) : "-"}</td>
+                  <td className="px-4 py-2 border-b">{getRewardAmount(reward)}</td>
                   <td className="px-4 py-2 border-b">
                     <button
                       className="text-xs px-2 py-1 bg-gray-200 rounded hover:bg-gray-300"
@@ -98,13 +112,23 @@ export default function PayoutTable() {
               )}
             </tbody>
           </table>
+          {hasMoreRows && (
+            <div className="mt-3 flex justify-center">
+              <button
+                className="rounded-md border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-medium text-blue-700 hover:bg-blue-100 transition"
+                onClick={() => setShowAllRows((prev) => !prev)}
+              >
+                {showAllRows ? 'Show less' : `Show more (${payouts.length - DEFAULT_VISIBLE_ROWS} more rows)`}
+              </button>
+            </div>
+          )}
         </div>
 
         {selectedCycle && (
           <div className="mb-8 p-4 border rounded bg-gray-50 w-full max-w-2xl mx-auto mt-6">
             <h4 className="font-bold mb-2 text-center">Reward Split for Cycle {selectedCycle}</h4>
             {loading && <div>Loading split rewards...</div>}
-            {!loading && splitRewards && Array.isArray(splitRewards) && splitRewards.length > 0 ? (
+            {!loading && hasSplitRewards && (
               <table className="min-w-full bg-white border border-gray-200 rounded-lg text-center">
                 <thead className="bg-gray-100">
                   <tr>
@@ -123,9 +147,8 @@ export default function PayoutTable() {
                   ))}
                 </tbody>
               </table>
-            ) : !loading && splitRewards && splitRewards.length === 0 ? (
-              <div>No split rewards found for this cycle.</div>
-            ) : null}
+            )}
+            {!loading && hasNoSplitRewards && <div>No split rewards found for this cycle.</div>}
             <button className="mt-4 px-4 py-2 bg-blue-600 text-white rounded w-full" onClick={() => setSelectedCycle(null)}>
               Close
             </button>

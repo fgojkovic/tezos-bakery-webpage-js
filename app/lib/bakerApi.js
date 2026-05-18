@@ -9,5 +9,7 @@ export const BAKER_ADDRESS = "tz1fazA9hbHB2Z6nntT9UhdGsAXTcfzzvDpj";
 export const ACCOUNT_ENDPOINT = `${TZKT_API_BASE}/accounts/${BAKER_ADDRESS}`;
 export const ACCOUNT_OPERATIONS_ENDPOINT = `${TZKT_API_BASE}/operations/baking?baker=${BAKER_ADDRESS}`;
 export const ACCOUNT_PAYOUTS_ENDPOINT = `${TZKT_API_BASE}/operations/transaction?target=${BAKER_ADDRESS}&limit=20`;
+export const ACCOUNT_ENDORSEMENTS_ENDPOINT = `${TZKT_API_BASE}/accounts/${BAKER_ADDRESS}/endorsements`;
 // For rewards, use /rewards/split/{address} if available
 export const REWARDS_ENDPOINT = `${TZKT_API_BASE}/rewards/bakers/${BAKER_ADDRESS}`;
+export const BAKER_ENDORSEMENTS_ENDPOINT = `${TZKT_API_BASE}/bakers/${BAKER_ADDRESS}/endorsements`;

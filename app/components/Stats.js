@@ -18,8 +18,8 @@ const defaultStats = [
   {
     icon: Users,
     number: '—',
-    label: 'Active Delegators',
-    description: 'Trusted by thousands of XTZ holders'
+    label: 'Stakers / Delegators',
+    description: 'Live participant count in our baking service'
   },
   {
     icon: Award,
@@ -50,10 +50,13 @@ const defaultStats = [
 
 const Stats = () => {
   const [stats, setStats] = useState(defaultStats);
-  const [nextBlock, setNextBlock] = useState('—');
-  const [uptime, setUptime] = useState('—');
 
   useEffect(() => {
+    const formatNumber = (value) => {
+      if (value === 0) return '0';
+      return value ? value.toLocaleString() : '—';
+    };
+
     // Fetch all stats in parallel
     Promise.all([
       fetch(API_URL).then(res => res.json()),
@@ -61,6 +64,9 @@ const Stats = () => {
       fetch(`https://api.tzkt.io/v1/accounts/${BAKER_ADDRESS}/missed/blocks?limit=1`).then(res => res.ok ? res.json() : null)
     ])
       .then(([data, head, missedBlocks]) => {
+        let nextBlockEta = '—';
+        let uptimeValue = 'No missed blocks';
+
         // Next block ETA
         if (head?.timestamp) {
           const blockTime = 30; // seconds, from protocol constants
@@ -68,7 +74,7 @@ const Stats = () => {
           const nextBlockDate = new Date(blockDate.getTime() + blockTime * 1000);
           const now = new Date();
           const diff = (nextBlockDate - now) / 1000;
-          setNextBlock(diff > 0 ? `${Math.floor(diff)}s` : 'Imminent');
+          nextBlockEta = diff > 0 ? `${Math.floor(diff)}s` : 'Imminent';
         }
 
         // Uptime: time since last missed block
@@ -79,9 +85,7 @@ const Stats = () => {
           const diffH = Math.floor(diffMs / (1000 * 60 * 60));
           const diffM = Math.floor((diffMs / (1000 * 60)) % 60);
           const diffS = Math.floor((diffMs / 1000) % 60);
-          setUptime(`${diffH}h ${diffM}m ${diffS}s`);
-        } else {
-          setUptime('No missed blocks');
+          uptimeValue = `${diffH}h ${diffM}m ${diffS}s`;
         }
 
         setStats([
@@ -93,9 +97,9 @@ const Stats = () => {
           },
           {
             icon: Users,
-            number: data.delegatorsCount ? data.delegatorsCount.toLocaleString() : '—',
-            label: 'Active Delegators',
-            description: 'Trusted by thousands of XTZ holders'
+            number: `${formatNumber(data.stakersCount)} / ${formatNumber(data.delegatorsCount)}`,
+            label: 'Stakers / Delegators',
+            description: 'Live participant count in our baking service'
           },
           {
             icon: Award,
@@ -111,13 +115,13 @@ const Stats = () => {
           },
           {
             icon: Clock,
-            number: head?.timestamp ? nextBlock : '—',
+            number: head?.timestamp ? nextBlockEta : '—',
             label: 'Next Block ETA',
             description: 'Estimated time until next block'
           },
           {
             icon: Timer,
-            number: uptime,
+            number: uptimeValue,
             label: 'Uptime',
             description: 'Time since last missed block'
           }
