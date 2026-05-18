@@ -7,7 +7,7 @@ export default function PayoutTable() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedCycle, setSelectedCycle] = useState(null);
-  const [splitRewards, setSplitRewards] = useState(null);
+  const [splitRewards, setSplitRewards] = useState({}); // { [cycle]: array|null }
   const [showAllRows, setShowAllRows] = useState(false);
 
   const DEFAULT_VISIBLE_ROWS = 10;
@@ -33,37 +33,43 @@ export default function PayoutTable() {
       });
   }, []);
 
-  // Fetch split rewards for selected cycle
-  useEffect(() => {
-    if (!selectedCycle) {
-      setSplitRewards(null);
+
+  // Fetch split rewards for a cycle on demand
+  const handleCycleClick = (cycle) => {
+    if (selectedCycle === cycle) {
+      setSelectedCycle(null);
       return;
     }
-    setSplitRewards(null);
-    setLoading(true);
-    fetch(`${TZKT_API_BASE}/rewards/split/${BAKER_ADDRESS}/${selectedCycle}`)
-      .then((res) => res.ok ? res.json() : null)
-      .then((data) => {
-        setSplitRewards(data);
-        setLoading(false);
-      })
-      .catch(() => {
-        setSplitRewards(null);
-        setLoading(false);
-      });
-  }, [selectedCycle]);
+    setSelectedCycle(cycle);
+    if (!splitRewards[cycle]) {
+      setLoading(true);
+      fetch(`${TZKT_API_BASE}/rewards/split/${BAKER_ADDRESS}/${cycle}`)
+        .then((res) => res.ok ? res.json() : null)
+        .then((data) => {
+          setSplitRewards((prev) => ({ ...prev, [cycle]: data }));
+          setLoading(false);
+        })
+        .catch(() => {
+          setSplitRewards((prev) => ({ ...prev, [cycle]: null }));
+          setLoading(false);
+        });
+    }
+  };
 
   if (loading) return <div>Loading payouts...</div>;
   if (error) return <div>{error}</div>;
 
   const visiblePayouts = showAllRows ? payouts : payouts.slice(0, DEFAULT_VISIBLE_ROWS);
   const hasMoreRows = payouts.length > DEFAULT_VISIBLE_ROWS;
-  const hasSplitRewards = Array.isArray(splitRewards) && splitRewards.length > 0;
-  const hasNoSplitRewards = Array.isArray(splitRewards) && splitRewards.length === 0;
 
+  // TzKT reward fields: cycle, block, timestamp, reward, etc.
   const getRewardAmount = (reward) => {
-    if (reward.total) return (reward.total / 1_000_000).toFixed(2);
-    if (reward.reward) return (reward.reward / 1_000_000).toFixed(2);
+    if (reward.blockRewardsDelegated) return (reward.blockRewardsDelegated / 1_000_000).toFixed(2);
+    if (reward.blockRewardsStakedOwn) return (reward.blockRewardsStakedOwn / 1_000_000).toFixed(2);
+    if (reward.blockRewardsStakedEdge) return (reward.blockRewardsStakedEdge / 1_000_000).toFixed(2);
+    if (reward.blockRewardsStakedShared) return (reward.blockRewardsStakedShared / 1_000_000).toFixed(2);
+    if (reward.futureBlockRewards) return (reward.futureBlockRewards / 1_000_000).toFixed(2);
+    if (reward.blockRewards) return (reward.blockRewards / 1_000_000).toFixed(2);
     return "-";
   };
 
@@ -83,31 +89,66 @@ export default function PayoutTable() {
               </tr>
             </thead>
             <tbody>
-              {visiblePayouts && visiblePayouts.length > 0 ? visiblePayouts.map((reward, i) => (
-                <tr key={reward.cycle || reward.id || i} className="hover:bg-blue-50 transition">
+              {visiblePayouts && visiblePayouts.length > 0 ? visiblePayouts.map((reward, i) => [
+                <tr key={reward.cycle || reward.id || i} className={selectedCycle === reward.cycle ? "bg-blue-50" : "hover:bg-blue-50 transition"}>
                   <td className="px-4 py-2 border-b">
                     <button
                       className="text-blue-600 underline hover:text-blue-800"
-                      onClick={() => setSelectedCycle(reward.cycle)}
+                      onClick={() => handleCycleClick(reward.cycle)}
                       disabled={loading}
                     >
-                      {reward.cycle ?? reward.level ?? "-"}
+                      {reward.cycle ?? "-"}
                     </button>
                   </td>
-                  <td className="px-4 py-2 border-b">{reward.block ?? reward.hash ?? "-"}</td>
+                  <td className="px-4 py-2 border-b">{reward.block ?? reward.level ?? "-"}</td>
                   <td className="px-4 py-2 border-b">{reward.timestamp ? new Date(reward.timestamp).toLocaleString() : "-"}</td>
                   <td className="px-4 py-2 border-b">{getRewardAmount(reward)}</td>
                   <td className="px-4 py-2 border-b">
                     <button
                       className="text-xs px-2 py-1 bg-gray-200 rounded hover:bg-gray-300"
-                      onClick={() => setSelectedCycle(reward.cycle)}
+                      onClick={() => handleCycleClick(reward.cycle)}
                       disabled={loading}
                     >
-                      View Split
+                      {selectedCycle === reward.cycle ? "Hide Split" : "View Split"}
                     </button>
                   </td>
-                </tr>
-              )) : (
+                </tr>,
+                selectedCycle === reward.cycle && (
+                  <tr key={`split-${reward.cycle}`}>
+                    <td colSpan={5} className="bg-blue-50 border-b p-0">
+                      <div className="p-4">
+                        {loading && <div>Loading split rewards...</div>}
+                        {!loading && Array.isArray(splitRewards[reward.cycle]) && splitRewards[reward.cycle].length > 0 && (
+                          <table className="min-w-full bg-white border border-gray-200 rounded-lg text-center mb-2">
+                            <thead className="bg-gray-100">
+                              <tr>
+                                <th className="px-4 py-2 border-b">Address</th>
+                                <th className="px-4 py-2 border-b">Amount (XTZ)</th>
+                                <th className="px-4 py-2 border-b">Type</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {splitRewards[reward.cycle].map((split, idx) => (
+                                <tr key={split.address || idx} className="hover:bg-blue-50 transition">
+                                  <td className="px-4 py-2 border-b">{split.address}</td>
+                                  <td className="px-4 py-2 border-b">{(split.amount / 1_000_000).toFixed(2)}</td>
+                                  <td className="px-4 py-2 border-b">{split.type}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        )}
+                        {!loading && (splitRewards[reward.cycle] === null || (Array.isArray(splitRewards[reward.cycle]) && splitRewards[reward.cycle].length === 0)) && (
+                          <div>
+                            <div className="text-gray-700 mb-2">No split rewards found for this cycle.</div>
+                            <div className="text-xs text-gray-500">Cycle: {reward.cycle} | Block: {reward.block ?? reward.level ?? "-"} | Reward: {getRewardAmount(reward)} XTZ</div>
+                          </div>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                )
+              ]) : (
                 <tr><td colSpan={5} className="px-4 py-2 text-center">No rewards found</td></tr>
               )}
             </tbody>

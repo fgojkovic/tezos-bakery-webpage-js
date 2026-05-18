@@ -41,7 +41,14 @@ export default function BakerStatus({ compact = false }) {
     fetch(ACCOUNT_ENDPOINT)
       .then((res) => res.json())
       .then((data) => {
-        setStatus(data.status);
+        // TzKT: 'active' is boolean, true means online
+        if (typeof data.active === 'boolean') {
+          setStatus(data.active ? "active" : "deactivated");
+        } else if (data.status) {
+          setStatus(data.status);
+        } else {
+          setStatus("unknown");
+        }
         setLoading(false);
       })
       .catch(() => {

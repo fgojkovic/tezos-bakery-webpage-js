@@ -87,14 +87,14 @@ const Hero = () => {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 1 }}
-        className="absolute bottom-10 left-1/2 -translate-x-1/2 z-20"
+        className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20"
       >
         <motion.div
-          animate={{ y: [0, 12, 0] }}
+          animate={{ y: [0, 20, 0] }}
           transition={{ duration: 2, repeat: Infinity }}
-          className="w-9 h-14 border-[3px] border-gray-500 rounded-full flex justify-center items-start bg-white/90 shadow-md"
+          className="w-14 h-24 border-[4px] border-blue-500 rounded-full flex justify-center items-start bg-white/95 shadow-xl"
         >
-          <div className="w-2 h-4 bg-gray-500 rounded-full mt-3"></div>
+          <div className="w-3 h-8 bg-blue-400 rounded-full mt-4"></div>
         </motion.div>
       </motion.div>
     </section>

@@ -64,8 +64,8 @@ const Stats = () => {
       fetch(`https://api.tzkt.io/v1/accounts/${BAKER_ADDRESS}/missed/blocks?limit=1`).then(res => res.ok ? res.json() : null)
     ])
       .then(([data, head, missedBlocks]) => {
-        let nextBlockEta = '—';
-        let uptimeValue = 'No missed blocks';
+        let nextBlockEta = '';
+        let uptimeValue = '100% uptime (no missed blocks)';
 
         // Next block ETA
         if (head?.timestamp) {
@@ -85,37 +85,37 @@ const Stats = () => {
           const diffH = Math.floor(diffMs / (1000 * 60 * 60));
           const diffM = Math.floor((diffMs / (1000 * 60)) % 60);
           const diffS = Math.floor((diffMs / 1000) % 60);
-          uptimeValue = `${diffH}h ${diffM}m ${diffS}s`;
+          uptimeValue = `${diffH}h ${diffM}m ${diffS}s since last missed block`;
         }
 
         setStats([
           {
             icon: BarChart3,
-            number: data.stakingBalance ? `${(data.stakingBalance / 1_000_000).toLocaleString()} XTZ` : '—',
+            number: data.stakingBalance ? `${(data.stakingBalance / 1_000_000).toLocaleString()} XTZ` : '',
             label: 'XTZ Staked',
             description: 'Total value locked in our baking service'
           },
           {
             icon: Users,
-            number: `${formatNumber(data.stakersCount)} / ${formatNumber(data.delegatorsCount)}`,
-            label: 'Stakers / Delegators',
-            description: 'Live participant count in our baking service'
+            number: typeof data.numDelegators !== 'undefined' ? formatNumber(data.numDelegators) : (typeof data.delegatorsCount !== 'undefined' ? formatNumber(data.delegatorsCount) : '—'),
+            label: 'Delegators',
+            description: 'Number of unique delegators'
           },
           {
             icon: Award,
-            number: data.performance ? `${(data.performance * 100).toFixed(2)}%` : '—',
+            number: typeof data.performance !== 'undefined' ? `${(data.performance * 100).toFixed(2)}%` : (typeof data.bakingPower !== 'undefined' ? `${data.bakingPower}` : '—'),
             label: 'Performance',
             description: 'Baker performance (not true uptime)'
           },
           {
             icon: TrendingUp,
-            number: data.fee ? `${data.fee}%` : '—',
+            number: typeof data.fee !== 'undefined' ? `${data.fee}%` : (typeof data.feeRate !== 'undefined' ? `${data.feeRate}%` : '—'),
             label: 'Baker Fee',
             description: 'Current fee for delegators'
           },
           {
             icon: Clock,
-            number: head?.timestamp ? nextBlockEta : '—',
+            number: head?.timestamp ? nextBlockEta : '',
             label: 'Next Block ETA',
             description: 'Estimated time until next block'
           },
@@ -123,7 +123,7 @@ const Stats = () => {
             icon: Timer,
             number: uptimeValue,
             label: 'Uptime',
-            description: 'Time since last missed block'
+            description: 'Time since last missed block or 100% uptime'
           }
         ]);
       })
